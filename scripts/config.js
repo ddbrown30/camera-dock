@@ -41,6 +41,8 @@ Hooks.on("renderCameraViews", (app, html) => {
         game.settings.set("camera-dock", "camera-size", Math.max(100, (size + diff) % 400));
     });
     $(".user-controls").find("nav").append(sizeBTN);
+    let ccc = $(document).find(".camera-grid .control-bar.bottom");
+    ccc.addClass("hidden");
     html.find(".player-name").each((i,el) => {
         el.onclick = (e) => {
             try{
