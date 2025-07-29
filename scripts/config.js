@@ -1,15 +1,15 @@
 Hooks.once('init', function () {
     game.settings.register("camera-dock", "camera-size", {
         name: "",
-        default: 200,
+        default: 2,
         type: Number,
         scope: "client",
         config: false,
         onChange: () => {
-            document.documentElement.style.setProperty('--camera-size', game.settings.get("camera-dock", "camera-size") + "px");
+            document.documentElement.style.setProperty('--camera-size', game.settings.get("camera-dock", "camera-size"));
         },
     });
-    document.documentElement.style.setProperty('--camera-size', game.settings.get("camera-dock", "camera-size") + "px");
+    document.documentElement.style.setProperty('--camera-size', game.settings.get("camera-dock", "camera-size"));
 });
 
 Hooks.once("ready", () => {
@@ -48,8 +48,8 @@ Hooks.on("renderCameraViews", (app, html) => {
 
     sizeBTN.addEventListener("mouseup", (e) => {
         const size = game.settings.get("camera-dock", "camera-size");
-        const diff = e.button === 0 ? 50 : -50;
-        game.settings.set("camera-dock", "camera-size", Math.max(100, (size + diff) % 350));
+        const diff = e.button === 0 ? 0.5 : -0.5;
+        game.settings.set("camera-dock", "camera-size", Math.max(1, (size + diff) % 3.5));
     });
     const userControlsNav = document.querySelector("#camera-views > .user-controls");
         userControlsNav.appendChild(sizeBTN);
