@@ -33,6 +33,13 @@
     bottom: calc(0.2rem * var(--camera-size));
 }
 
+.camera-view .connection-quality-indicator {
+    width: calc(0.3rem * var(--camera-size));
+    height: calc(0.3rem * var(--camera-size));
+    right: calc(0.3rem * var(--camera-size));
+    bottom: calc(0.2rem * var(--camera-size));
+}
+
 .player-name strong {
     font-size: calc(0.4rem * var(--camera-size));
     line-height: calc(0.7rem * var(--camera-size));
