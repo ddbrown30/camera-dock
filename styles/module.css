@@ -6,7 +6,7 @@
 
 
 #camera-views{
-    --av-width: unset;
+    /* --av-width: unset; */
     width: 100% !important;
     min-width: 100% !important;
     height: auto !important;
