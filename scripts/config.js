@@ -71,10 +71,14 @@ Hooks.on("renderCameraViews", (app, html) => {
     if (rtcWorldSettings.mode != foundry.av.AVSettings.AV_MODES.AUDIO_VIDEO) {
         if (rtcWorldSettings.mode != foundry.av.AVSettings.AV_MODES.VIDEO) {
             html.querySelector(".status-hidden")?.remove();
+            html.querySelector(`[data-action="toggleVideo"]`)?.remove();
+            html.querySelector(`[data-action="disableVideo"]`)?.remove();
         }
 
         if (rtcWorldSettings.mode != foundry.av.AVSettings.AV_MODES.AUDIO) {
             html.querySelector(".status-muted")?.remove();
+            html.querySelector(`[data-action="toggleAudio"]`)?.remove();
+            html.querySelector(`[data-action="mutePeers"]`)?.remove();
         }
     }
 });
