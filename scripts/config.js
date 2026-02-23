@@ -66,4 +66,15 @@ Hooks.on("renderCameraViews", (app, html) => {
             }
         });
     });
+
+    const rtcWorldSettings = game.settings.get('core', 'rtcWorldSettings');
+    if (rtcWorldSettings.mode != foundry.av.AVSettings.AV_MODES.AUDIO_VIDEO) {
+        if (rtcWorldSettings.mode != foundry.av.AVSettings.AV_MODES.VIDEO) {
+            html.querySelector(".status-hidden")?.remove();
+        }
+
+        if (rtcWorldSettings.mode != foundry.av.AVSettings.AV_MODES.AUDIO) {
+            html.querySelector(".status-muted")?.remove();
+        }
+    }
 });
