@@ -17,10 +17,10 @@
       "path": "languages/en.json"
     }
   ],
-  "scripts": [
-    "scripts/config.js"
+  "scripts": [],
+  "esmodules": [
+    "module.js"
   ],
-  "esmodules": [],
   "styles": [
     "styles/module.css"
   ],

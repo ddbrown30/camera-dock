@@ -1,8 +1,8 @@
-:root{
+:root {
     --camera-size: 1;
 }
 
-#camera-views{
+#camera-views {
     /* --av-width: unset; */
     width: 100% !important;
     min-width: 100% !important;
@@ -43,11 +43,11 @@
         line-height: calc(0.7rem * var(--camera-size));
     }
 
-    &:not(.minimized ) .camera-view .video-container {
+    &:not(.minimized) .camera-view .video-container {
         width: calc(6rem * var(--camera-size)) !important;
     }
 
-    .camera-grid{
+    .camera-grid {
         display: flex;
         flex-wrap: wrap-reverse;
         justify-content: flex-start !important;
@@ -55,31 +55,31 @@
         height: 100%;
     }
 
-    .camera-container{
+    .camera-container {
         justify-content: flex-start;
         display: flex !important;
     }
 
-    .user-controls{
+    .user-controls {
         order: -100;
         pointer-events: all;
         z-index: -10;
     }
 
-    .user-controls nav{
+    .user-controls nav {
         opacity: 0;
         transition: all 0.2s ease-in-out;
     }
 
-    .av-control[data-action="toggle-dock"]{
+    .av-control[data-action="toggle-dock"] {
         display: none !important;
     }
 
-    &.camera-position-bottom .camera-view-width-control{
+    &.camera-position-bottom .camera-view-width-control {
         display: none;
     }
 
-    &.floating {
+    &.undocked {
         position: fixed !important;
         width: max-content !important;
         min-width: unset !important;
@@ -99,6 +99,6 @@
     }
 }
 
-#user-controls{
+#user-controls {
     order: -100;
 }
