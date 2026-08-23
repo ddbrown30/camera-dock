@@ -14,6 +14,17 @@ export function registerSettings() {
         },
     });
 
+    Utils.registerSetting(MODULE_CONFIG.SETTING_KEYS.cameraOrientation, {
+        name: "",
+        default: "right",
+        type: String,
+        scope: "client",
+        config: false,
+        onChange: (orientation) => {
+            document.documentElement.dataset.cameraOrientation = orientation;
+        },
+    });
+
     Utils.registerSetting(MODULE_CONFIG.SETTING_KEYS.undocked, {
         name: "",
         default: false,

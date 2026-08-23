@@ -78,26 +78,38 @@ export class CameraPanel {
         });
     }
 
+    static attachUserControls(cameraViews) {
+        const camContainer = cameraViews?.querySelector(".camera-container");
+        const userControlsNav = cameraViews?.querySelector('[data-application-part="controls"]');
+        const selfView = cameraViews?.querySelector(`.camera-view[data-user="${game.user.id}"]`);
+        if (!camContainer || !userControlsNav || !selfView) return;
+
+        let wrapper = camContainer.querySelector(":scope > .local-camera-group");
+        if (!wrapper) {
+            wrapper = document.createElement("div");
+            wrapper.classList.add("local-camera-group");
+        }
+        wrapper.append(userControlsNav, selfView);
+        camContainer.prepend(wrapper);
+
+        const scrollable = cameraViews.querySelector(".scrollable");
+        if (scrollable) {
+            const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--controls-gap")) || 0;
+            const width = `${userControlsNav.getBoundingClientRect().width + gap + 5}px`;
+            scrollable.style.paddingLeft = width;
+            scrollable.style.paddingRight = width;
+        }
+    }
+
     static onRenderCameraViews(app, html) {
         CameraPanel.cameraViewsApp = app;
 
         const cameraViews = document.getElementById("camera-views");
         CameraPanel.applyDockState(app, cameraViews);
+        CameraPanel.attachUserControls(cameraViews);
 
-        const isButton = !!document.querySelector("#camera-views > .user-controls button[data-action='cycle-video']");
-        if (!isButton) {
-            const sizeBTN = document.createElement("button");
-            sizeBTN.type = "button";
-            sizeBTN.classList.add("av-control", "inline-control", "icon", "fa-solid", "fa-fw", "fa-arrows-alt-h");
-            sizeBTN.dataset.action = "cycle-video";
-            sizeBTN.dataset.tooltip = "Cycle Size";
-
-            sizeBTN.addEventListener("mouseup", (e) => {
-                const size = Utils.getSetting(MODULE_CONFIG.SETTING_KEYS.cameraSize);
-                const diff = e.button === 0 ? 0.5 : -0.5;
-                Utils.setSetting(MODULE_CONFIG.SETTING_KEYS.cameraSize, Math.max(1, (size + diff) % 3.5));
-            });
-
+        const hasUndockButton = !!document.querySelector('#camera-views [data-application-part="controls"] button[data-action="toggle-float"]');
+        if (!hasUndockButton) {
             const floatBTN = document.createElement("button");
             floatBTN.type = "button";
             floatBTN.classList.add("av-control", "inline-control", "icon", "fa-solid", "fa-fw", "fa-thumbtack");
@@ -116,8 +128,7 @@ export class CameraPanel {
                 if (CameraPanel.cameraViewsApp) CameraPanel.applyDockState(CameraPanel.cameraViewsApp, cv);
             });
 
-            const userControlsNav = document.querySelector("#camera-views > .user-controls");
-            userControlsNav.appendChild(sizeBTN);
+            const userControlsNav = document.querySelector('#camera-views [data-application-part="controls"]');
             userControlsNav.appendChild(floatBTN);
 
             const playerNames = html.querySelectorAll(".player-name");
