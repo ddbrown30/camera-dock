@@ -2,9 +2,6 @@
     --camera-size: 1;
 }
 
-#ui-bottom{
-
-
 #camera-views{
     /* --av-width: unset; */
     width: 100% !important;
@@ -14,82 +11,94 @@
     position: unset !important;
     padding-bottom: 6px !important;
     border: none;
-}
 
-.camera-view {
-    pointer-events: all !important;
-    margin: 0;
-}
+    .camera-view {
+        pointer-events: all !important;
+        margin: 0;
+    }
 
-.player-name {
-    min-height: calc(0.8rem * var(--camera-size));
-    padding-top: calc(0.1rem * var(--camera-size));
-}
+    .player-name {
+        min-height: calc(0.8rem * var(--camera-size));
+        padding-top: calc(0.1rem * var(--camera-size));
+        cursor: pointer;
+        pointer-events: all;
+    }
 
-.camera-view .player-name::before {
-    width: calc(0.3rem * var(--camera-size));
-    height: calc(0.3rem * var(--camera-size));
-    left: calc(0.3rem * var(--camera-size));
-    bottom: calc(0.2rem * var(--camera-size));
-}
+    .camera-view .player-name::before {
+        width: calc(0.3rem * var(--camera-size));
+        height: calc(0.3rem * var(--camera-size));
+        left: calc(0.3rem * var(--camera-size));
+        bottom: calc(0.2rem * var(--camera-size));
+    }
 
-.camera-view .connection-quality-indicator {
-    width: calc(0.3rem * var(--camera-size));
-    height: calc(0.3rem * var(--camera-size));
-    right: calc(0.3rem * var(--camera-size));
-    bottom: calc(0.2rem * var(--camera-size));
-}
+    .camera-view .connection-quality-indicator {
+        width: calc(0.3rem * var(--camera-size));
+        height: calc(0.3rem * var(--camera-size));
+        right: calc(0.3rem * var(--camera-size));
+        bottom: calc(0.2rem * var(--camera-size));
+    }
 
-.player-name strong {
-    font-size: calc(0.4rem * var(--camera-size));
-    line-height: calc(0.7rem * var(--camera-size));
-}
+    .player-name strong {
+        font-size: calc(0.4rem * var(--camera-size));
+        line-height: calc(0.7rem * var(--camera-size));
+    }
 
-#camera-views:not(.minimized ) .camera-view .video-container {
-    width: calc(6rem * var(--camera-size)) !important;
-}
+    &:not(.minimized ) .camera-view .video-container {
+        width: calc(6rem * var(--camera-size)) !important;
+    }
 
-.camera-grid{
-    display: flex;
-    flex-wrap: wrap-reverse;
-    justify-content: flex-start !important;
-    gap: 10px;
-    height: 100%;
-}
+    .camera-grid{
+        display: flex;
+        flex-wrap: wrap-reverse;
+        justify-content: flex-start !important;
+        gap: 10px;
+        height: 100%;
+    }
 
-.camera-container{
-    justify-content: flex-start;
-    display: flex !important;
+    .camera-container{
+        justify-content: flex-start;
+        display: flex !important;
+    }
 
+    .user-controls{
+        order: -100;
+        pointer-events: all;
+        z-index: -10;
+    }
+
+    .user-controls nav{
+        opacity: 0;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .av-control[data-action="toggle-dock"]{
+        display: none !important;
+    }
+
+    &.camera-position-bottom .camera-view-width-control{
+        display: none;
+    }
+
+    &.floating {
+        position: fixed !important;
+        width: max-content !important;
+        min-width: unset !important;
+        max-width: 90vw !important;
+        height: auto !important;
+        z-index: 100;
+        cursor: move;
+
+        .av-control,
+        .player-name {
+            cursor: pointer;
+        }
+
+        .av-control[data-action="toggle-float"] {
+            transform: rotate(45deg);
+        }
+    }
 }
 
 #user-controls{
     order: -100;
-}
-
-.user-controls{
-    order: -100;
-    pointer-events: all;
-    z-index: -10;
-}
-
-.user-controls nav{
-    opacity: 0;
-    transition: all 0.2s ease-in-out;
-}
-
-.av-control[data-action="toggle-dock"]{
-    display: none !important;
-}
-
-.player-name{
-    cursor: pointer;
-    pointer-events: all;
-}
-
-div#camera-views.camera-position-bottom .camera-view-width-control{
-    display: none;
-}
-
-
 }

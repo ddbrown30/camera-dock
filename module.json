@@ -18,9 +18,7 @@
     }
   ],
   "scripts": [
-    "scripts/config.js",
-    "scripts/main.js",
-    "scripts/module.js"
+    "scripts/config.js"
   ],
   "esmodules": [],
   "styles": [
