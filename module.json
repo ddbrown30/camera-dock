@@ -26,6 +26,11 @@
   "styles": [
     "styles/module.css"
   ],
+  "flags": {
+    "hotReload": {
+      "extensions": ["css"]
+    }
+  },
   "packs": [],
   "url": "https://github.com/theripper93/Levels",
   "manifest": "https://github.com/theripper93/Levels/releases/latest/download/module.json",
