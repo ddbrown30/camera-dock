@@ -10,8 +10,10 @@ export function registerSettings() {
         type: Number,
         scope: "client",
         config: false,
-        onChange: (cameraSize) => {
+        onChange: async (cameraSize) => {
             document.documentElement.style.setProperty('--camera-size', cameraSize);
+            CameraPanel.syncDetachedDocumentState();
+            await CameraPanel.sizeDetachedWindow(CameraPanel.getDetachedWindow());
         },
     });
 
@@ -21,9 +23,11 @@ export function registerSettings() {
         type: String,
         scope: "client",
         config: false,
-        onChange: (orientation) => {
+        onChange: async (orientation) => {
             document.documentElement.dataset.cameraOrientation = orientation;
             CameraPanel.repositionActivePopout();
+            CameraPanel.syncDetachedDocumentState();
+            await CameraPanel.sizeDetachedWindow(CameraPanel.getDetachedWindow());
         },
     });
 
@@ -33,8 +37,10 @@ export function registerSettings() {
         type: Boolean,
         scope: "client",
         config: false,
-        onChange: (enabled) => {
+        onChange: async (enabled) => {
             document.documentElement.classList.toggle("camera-dock-bottom-below-video", enabled);
+            CameraPanel.syncDetachedDocumentState();
+            await CameraPanel.sizeDetachedWindow(CameraPanel.getDetachedWindow());
         },
     });
 

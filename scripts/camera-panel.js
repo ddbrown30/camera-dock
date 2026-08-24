@@ -16,6 +16,10 @@ export class CameraPanel {
 
     static applyDockState(app, cameraViews) {
         if (!cameraViews) return;
+        if (CameraPanel.getDetachedWindow()) {
+            cameraViews.classList.remove("undocked");
+            return;
+        }
         const undocked = Utils.getSetting(MODULE_CONFIG.SETTING_KEYS.undocked);
         cameraViews.classList.toggle("undocked", undocked);
         if (undocked) {
@@ -79,7 +83,8 @@ export class CameraPanel {
     }
 
     static getUserControlsNav() {
-        const navs = [...document.querySelectorAll(`[data-application-part="controls"][data-user="${game.user.id}"]`)];
+        const searchDoc = CameraPanel.cameraViewsApp?.element?.ownerDocument ?? document;
+        const navs = [...searchDoc.querySelectorAll(`[data-application-part="controls"][data-user="${game.user.id}"]`)];
         if (navs.length === 0) return null;
 
         const primary = navs.find(nav => nav.querySelector('button[data-action="toggle-panel-dock"]')) ?? navs[navs.length - 1];
@@ -97,7 +102,7 @@ export class CameraPanel {
         CameraPanel.relayedNavs.add(nav);
 
         nav.addEventListener("click", (event) => {
-            const cameraViews = document.getElementById("camera-views");
+            const cameraViews = CameraPanel.cameraViewsApp?.element;
             if (cameraViews?.contains(nav)) return;
 
             const target = event.target.closest("[data-action]");
@@ -202,14 +207,148 @@ export class CameraPanel {
         CameraPanel.disconnectPopoutSync();
     }
 
+    static getDetachedWindow() {
+        if (CameraPanel.detachedWin && !CameraPanel.detachedWin.closed) {
+            return CameraPanel.detachedWin;
+        }
+        return null;
+    }
+
+    static isElementInMainDocument() {
+        const win = CameraPanel.cameraViewsApp?.element?.ownerDocument?.defaultView;
+        return !win || win === window;
+    }
+
+    static syncDetachedDocumentState() {
+        const win = CameraPanel.getDetachedWindow();
+        if (!win) return;
+
+        win.document.documentElement.style.setProperty('--camera-size', Utils.getSetting(MODULE_CONFIG.SETTING_KEYS.cameraSize));
+        win.document.documentElement.dataset.cameraOrientation = Utils.getSetting(MODULE_CONFIG.SETTING_KEYS.cameraOrientation);
+        win.document.documentElement.classList.toggle("camera-dock-bottom-below-video", Utils.getSetting(MODULE_CONFIG.SETTING_KEYS.bottomBelowVideo));
+
+        const cameraViews = CameraPanel.cameraViewsApp?.element;
+        if (cameraViews) {
+            cameraViews.style.maxWidth = "none";
+            cameraViews.style.maxHeight = "none";
+        }
+    }
+
+    static updateDetachButtonState(btn) {
+        if (!btn) return;
+        const detached = !!CameraPanel.getDetachedWindow();
+        btn.classList.toggle("fa-arrow-up-right-from-square", !detached);
+        btn.classList.toggle("fa-arrow-down-to-square", detached);
+        btn.dataset.tooltip = detached ? "Re-attach" : "Detach into Window";
+    }
+
+    static updateFloatButtonState(btn) {
+        if (!btn) return;
+        const detached = !!CameraPanel.getDetachedWindow();
+        btn.hidden = detached;
+        btn.disabled = detached;
+    }
+
+    static async sizeDetachedWindow(win) {
+        if (!win) return;
+        // Let layout settle after syncDetachedDocumentState()'s class/attribute changes
+        await new Promise(resolve => win.requestAnimationFrame(() => win.requestAnimationFrame(resolve)));
+
+        const scrollable = win.document.querySelector(".scrollable");
+        const container = win.document.querySelector(".camera-container");
+        if (!scrollable || !container) return;
+
+        const horizontalPadding = parseFloat(win.getComputedStyle(scrollable).paddingLeft)
+            + parseFloat(win.getComputedStyle(scrollable).paddingRight);
+        const contentWidth = Math.ceil(container.getBoundingClientRect().width + horizontalPadding);
+        const contentHeight = Math.ceil(scrollable.getBoundingClientRect().height);
+
+        const chromeWidth = Math.max(0, win.outerWidth - win.innerWidth);
+        const chromeHeight = Math.max(0, win.outerHeight - win.innerHeight);
+        const width = contentWidth + chromeWidth;
+        const height = contentHeight + chromeHeight;
+
+        try {
+            win.resizeTo(width, height);
+            win.moveTo(
+                Math.round((screen.width - width) / 2),
+                Math.round((screen.height - height) / 2)
+            );
+        } catch (err) {
+            // Some browsers restrict resizeTo/moveTo; not critical if it's a no-op.
+        }
+    }
+
+    static async waitForDetachedWindow(timeout = 5000) {
+        const start = Date.now();
+        while (Date.now() - start < timeout) {
+            const win = CameraPanel.cameraViewsApp?.element?.ownerDocument?.defaultView;
+            if (win && win !== window && win.document?.readyState === "complete") return win;
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        return null;
+    }
+
+    static registerDetachedWindowAutoReattach(win) {
+        CameraPanel.clearDetachedWindowAutoReattach();
+        const handler = () => {
+            if (CameraPanel.getDetachedWindow() === win) {
+                CameraPanel.reattach();
+            }
+        };
+        win.addEventListener("pagehide", handler);
+        CameraPanel.detachedWindowUnload = { win, handler };
+    }
+
+    static clearDetachedWindowAutoReattach() {
+        if (CameraPanel.detachedWindowUnload) {
+            const { win, handler } = CameraPanel.detachedWindowUnload;
+            win.removeEventListener("pagehide", handler);
+            CameraPanel.detachedWindowUnload = null;
+        }
+    }
+
+    static async waitUntilReattached(timeout = 5000) {
+        const start = Date.now();
+        while (Date.now() - start < timeout) {
+            if (CameraPanel.isElementInMainDocument()) return true;
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        return CameraPanel.isElementInMainDocument();
+    }
+
+    static async reattach() {
+        const app = CameraPanel.cameraViewsApp;
+        if (!app) return;
+
+        await app.attachWindow();
+        await CameraPanel.waitUntilReattached();
+        CameraPanel.detachedWin = null;
+        CameraPanel.detachedParent = null;
+        CameraPanel.onRenderCameraViews(app, app.element);
+    }
+
+    static reclaimDetachedElement(cameraViews) {
+        const detachedWin = CameraPanel.getDetachedWindow();
+        if (!detachedWin || !CameraPanel.isElementInMainDocument()) return;
+
+        const parent = CameraPanel.detachedParent ?? detachedWin.document.body;
+        parent?.appendChild(cameraViews);
+    }
+
     static onRenderCameraViews(app, html) {
         CameraPanel.cameraViewsApp = app;
 
-        const cameraViews = document.getElementById("camera-views");
+        const cameraViews = app.element;
+        CameraPanel.reclaimDetachedElement(cameraViews);
         CameraPanel.applyDockState(app, cameraViews);
         CameraPanel.attachUserControls(cameraViews);
+        CameraPanel.syncDetachedDocumentState();
 
         const userControlsNav = CameraPanel.getUserControlsNav();
+        CameraPanel.updateDetachButtonState(userControlsNav?.querySelector('button[data-action="detach-panel-dock"]'));
+        CameraPanel.updateFloatButtonState(userControlsNav?.querySelector('button[data-action="toggle-panel-dock"]'));
+
         const hasUndockButton = !!userControlsNav?.querySelector('button[data-action="toggle-panel-dock"]');
         if (!hasUndockButton && userControlsNav) {
             const floatBTN = document.createElement("button");
@@ -219,9 +358,11 @@ export class CameraPanel {
             const initiallyUndocked = Utils.getSetting(MODULE_CONFIG.SETTING_KEYS.undocked);
             floatBTN.dataset.tooltip = initiallyUndocked ? "Dock" : "Undock";
             floatBTN.classList.toggle("is-undocked", initiallyUndocked);
+            CameraPanel.updateFloatButtonState(floatBTN);
 
             floatBTN.addEventListener("click", () => {
-                const cv = document.getElementById("camera-views");
+                if (CameraPanel.getDetachedWindow()) return;
+                const cv = CameraPanel.cameraViewsApp?.element;
                 const undocked = !Utils.getSetting(MODULE_CONFIG.SETTING_KEYS.undocked);
                 if (undocked && cv && CameraPanel.cameraViewsApp) {
                     const rect = cv.getBoundingClientRect();
@@ -234,6 +375,48 @@ export class CameraPanel {
             });
 
             userControlsNav.appendChild(floatBTN);
+
+            const detachBTN = document.createElement("button");
+            detachBTN.type = "button";
+            detachBTN.classList.add("av-control", "inline-control", "icon", "fa-solid", "fa-fw");
+            detachBTN.dataset.action = "detach-panel-dock";
+            CameraPanel.updateDetachButtonState(detachBTN);
+
+            detachBTN.addEventListener("click", async () => {
+                const app = CameraPanel.cameraViewsApp;
+                if (!app) return;
+
+                const currentWin = CameraPanel.getDetachedWindow();
+                if (currentWin) {
+                    CameraPanel.clearDetachedWindowAutoReattach();
+                    await CameraPanel.reattach();
+                    currentWin.close();
+                } else {
+                    // Foundry's detach positioning math (#getVisibleBoundingBox) requires the app's element to be not static
+                    // Switch our panel to relative only for the duration of the detach call so the bounding box can be computed.
+                    const cameraViews = app.element;
+                    cameraViews.style.setProperty("position", "relative", "important");
+                    try {
+                        await app.detachWindow();
+                    } finally {
+                        cameraViews.style.removeProperty("position");
+                    }
+
+                    const newWin = await CameraPanel.waitForDetachedWindow();
+                    if (newWin) {
+                        CameraPanel.detachedWin = newWin;
+                        CameraPanel.detachedParent = app.element.parentElement;
+                        CameraPanel.registerDetachedWindowAutoReattach(newWin);
+                        CameraPanel.syncDetachedDocumentState();
+                        await CameraPanel.sizeDetachedWindow(newWin);
+                    }
+                }
+                CameraPanel.syncDetachedDocumentState();
+                CameraPanel.updateDetachButtonState(detachBTN);
+                CameraPanel.updateFloatButtonState(floatBTN);
+            });
+
+            userControlsNav.appendChild(detachBTN);
 
             const playerNames = html.querySelectorAll(".player-name");
             playerNames.forEach((el) => {
