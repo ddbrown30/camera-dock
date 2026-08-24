@@ -15,6 +15,7 @@ export class HooksManager {
 
             document.documentElement.style.setProperty('--camera-size', Utils.getSetting(MODULE_CONFIG.SETTING_KEYS.cameraSize));
             document.documentElement.dataset.cameraOrientation = Utils.getSetting(MODULE_CONFIG.SETTING_KEYS.cameraOrientation);
+            document.documentElement.classList.toggle("camera-dock-bottom-below-video", Utils.getSetting(MODULE_CONFIG.SETTING_KEYS.bottomBelowVideo));
         });
 
         Hooks.once("ready", () => {
@@ -38,7 +39,7 @@ export class HooksManager {
                 const orientationGroup = document.createElement("div");
                 orientationGroup.classList.add("form-group");
                 orientationGroup.innerHTML = `
-                    <label>Camera Orientation</label>
+                    <label>Panel Orientation</label>
                     <div class="form-fields">
                         <select>
                             <option value="up">Grow Up</option>
@@ -68,6 +69,21 @@ export class HooksManager {
                     Utils.setSetting(MODULE_CONFIG.SETTING_KEYS.cameraSize, Number(sizeInput.value));
                 });
 
+                const bottomBelowVideoGroup = document.createElement("div");
+                bottomBelowVideoGroup.classList.add("form-group");
+                bottomBelowVideoGroup.innerHTML = `
+                    <label>Name Below Camera</label>
+                    <div class="form-fields">
+                        <input type="checkbox">
+                    </div>
+                `;
+                const bottomBelowVideoCheckbox = bottomBelowVideoGroup.querySelector("input");
+                bottomBelowVideoCheckbox.checked = Utils.getSetting(MODULE_CONFIG.SETTING_KEYS.bottomBelowVideo);
+                bottomBelowVideoCheckbox.addEventListener("change", () => {
+                    Utils.setSetting(MODULE_CONFIG.SETTING_KEYS.bottomBelowVideo, bottomBelowVideoCheckbox.checked);
+                });
+
+                insertAfter.insertAdjacentElement("afterend", bottomBelowVideoGroup);
                 insertAfter.insertAdjacentElement("afterend", orientationGroup);
                 insertAfter.insertAdjacentElement("afterend", sizeGroup);
             }

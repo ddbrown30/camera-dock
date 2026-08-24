@@ -145,3 +145,31 @@ html[data-camera-orientation="down"] #camera-views .camera-container {
 html[data-camera-orientation="up"] #camera-views .camera-container {
     flex-direction: column-reverse;
 }
+
+html.camera-dock-bottom-below-video[data-camera-orientation="down"] #camera-views .camera-container,
+html.camera-dock-bottom-below-video[data-camera-orientation="up"] #camera-views .camera-container {
+    gap: calc(0.8rem * var(--camera-size));
+}
+
+.application.camera-view.popout {
+    min-width: 100px;
+}
+
+html.camera-dock-bottom-below-video #camera-views .camera-view .bottom {
+    position: static;
+}
+
+html.camera-dock-bottom-below-video .application.camera-view.popout {
+    display: flex;
+    flex-direction: column;
+
+    .video-container {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .bottom {
+        position: static;
+        flex: 0 0 auto;
+    }
+}

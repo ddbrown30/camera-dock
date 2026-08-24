@@ -27,6 +27,17 @@ export function registerSettings() {
         },
     });
 
+    Utils.registerSetting(MODULE_CONFIG.SETTING_KEYS.bottomBelowVideo, {
+        name: "",
+        default: true,
+        type: Boolean,
+        scope: "client",
+        config: false,
+        onChange: (enabled) => {
+            document.documentElement.classList.toggle("camera-dock-bottom-below-video", enabled);
+        },
+    });
+
     Utils.registerSetting(MODULE_CONFIG.SETTING_KEYS.undocked, {
         name: "",
         default: false,

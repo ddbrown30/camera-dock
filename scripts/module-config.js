@@ -19,6 +19,7 @@ export const SETTING_KEYS = {
     undockedPosition: "undockedPosition",
     cameraSize: "camera-size",
     cameraOrientation: "cameraOrientation",
+    bottomBelowVideo: "bottomBelowVideo",
     progressiveRenderSize: "progressiveRenderSize",
 }
 
