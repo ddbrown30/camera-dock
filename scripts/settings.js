@@ -1,5 +1,6 @@
 import * as MODULE_CONFIG from "./module-config.js";
 import { Utils } from "./utils.js";
+import { CameraPanel } from "./camera-panel.js";
 
 export function registerSettings() {
 
@@ -22,6 +23,7 @@ export function registerSettings() {
         config: false,
         onChange: (orientation) => {
             document.documentElement.dataset.cameraOrientation = orientation;
+            CameraPanel.repositionActivePopout();
         },
     });
 

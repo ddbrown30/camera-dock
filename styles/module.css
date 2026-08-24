@@ -104,16 +104,26 @@
         .player-name {
             cursor: pointer;
         }
-
-        .av-control[data-action="toggle-float"] {
-            transform: rotate(45deg);
-        }
     }
+}
+
+.av-control[data-action="toggle-panel-dock"].is-undocked {
+    transform: rotate(45deg);
 }
 
 html[data-camera-orientation="left"] #camera-views .local-camera-group [data-application-part="controls"] {
     right: auto;
     left: calc(100% + var(--controls-gap));
+}
+
+.popout-controls {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+    z-index: 101;
 }
 
 #user-controls {

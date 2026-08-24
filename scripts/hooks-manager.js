@@ -76,5 +76,7 @@ export class HooksManager {
         });
 
         Hooks.on("renderCameraViews", CameraPanel.onRenderCameraViews);
+        Hooks.on("renderCameraPopout", CameraPanel.onRenderCameraPopout);
+        Hooks.on("closeCameraPopout", CameraPanel.onCloseCameraPopout);
     }
 }

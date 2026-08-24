@@ -78,11 +78,50 @@ export class CameraPanel {
         });
     }
 
+    static getUserControlsNav() {
+        const navs = [...document.querySelectorAll(`[data-application-part="controls"][data-user="${game.user.id}"]`)];
+        if (navs.length === 0) return null;
+
+        const primary = navs.find(nav => nav.querySelector('button[data-action="toggle-panel-dock"]')) ?? navs[navs.length - 1];
+        for (const nav of navs) {
+            if (nav !== primary) nav.remove();
+        }
+
+        CameraPanel.ensureNativeActionRelay(primary);
+        return primary;
+    }
+
+    static ensureNativeActionRelay(nav) {
+        CameraPanel.relayedNavs ??= new WeakSet();
+        if (CameraPanel.relayedNavs.has(nav)) return;
+        CameraPanel.relayedNavs.add(nav);
+
+        nav.addEventListener("click", (event) => {
+            const cameraViews = document.getElementById("camera-views");
+            if (cameraViews?.contains(nav)) return;
+
+            const target = event.target.closest("[data-action]");
+            if (!target || target.dataset.action === "toggle-panel-dock") return;
+
+            const app = CameraPanel.cameraViewsApp;
+            const handler = app?.options?.actions?.[target.dataset.action];
+            if (typeof handler === "function") {
+                handler.call(app, event, target);
+            }
+        });
+    }
+
     static attachUserControls(cameraViews) {
         const camContainer = cameraViews?.querySelector(".camera-container");
-        const userControlsNav = cameraViews?.querySelector('[data-application-part="controls"]');
+        const userControlsNav = CameraPanel.getUserControlsNav();
         const selfView = cameraViews?.querySelector(`.camera-view[data-user="${game.user.id}"]`);
         if (!camContainer || !userControlsNav || !selfView) return;
+
+        CameraPanel.disconnectPopoutSync();
+        userControlsNav.classList.remove("popout-controls");
+        userControlsNav.style.top = "";
+        userControlsNav.style.left = "";
+        userControlsNav.style.height = "";
 
         let wrapper = camContainer.querySelector(":scope > .local-camera-group");
         if (!wrapper) {
@@ -96,9 +135,71 @@ export class CameraPanel {
         if (scrollable) {
             const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--controls-gap")) || 0;
             const width = `${userControlsNav.getBoundingClientRect().width + gap + 5}px`;
-            scrollable.style.paddingLeft = width;
-            scrollable.style.paddingRight = width;
+            scrollable.style.padding = width;
         }
+    }
+
+    static positionPopoutControls(nav, el) {
+        const rect = el.getBoundingClientRect();
+        const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--controls-gap")) || 0;
+        const orientation = document.documentElement.dataset.cameraOrientation;
+
+        nav.style.top = `${rect.top}px`;
+        nav.style.height = `${rect.height}px`;
+        if (orientation === "left") {
+            nav.style.left = `${rect.right + gap}px`;
+        } else {
+            nav.style.left = `${rect.left - nav.getBoundingClientRect().width - gap}px`;
+        }
+    }
+
+    static disconnectPopoutSync() {
+        if (CameraPanel.popoutSync) {
+            CameraPanel.popoutSync.observer.disconnect();
+            CameraPanel.popoutSync.resizeObserver.disconnect();
+            CameraPanel.popoutSync = null;
+        }
+    }
+
+    static onRenderCameraPopout(app, html) {
+        CameraPanel.attachUserControlsToPopout(app, html);
+    }
+
+    static attachUserControlsToPopout(app, html) {
+        if (app.id !== `camera-view-${game.user.id}`) return;
+
+        const bottomControls = html.querySelector(".bottom .user-controls");
+        if (bottomControls) {
+            bottomControls.remove();
+        }
+
+        const userControlsNav = CameraPanel.getUserControlsNav();
+        if (!userControlsNav) return;
+
+        const el = app.element;
+        if (userControlsNav.parentElement !== document.body) {
+            document.body.append(userControlsNav);
+        }
+        userControlsNav.classList.add("popout-controls");
+
+        CameraPanel.disconnectPopoutSync();
+        const reposition = () => CameraPanel.positionPopoutControls(userControlsNav, el);
+        reposition();
+
+        const observer = new MutationObserver(reposition);
+        observer.observe(el, { attributes: true, attributeFilter: ["style"] });
+        const resizeObserver = new ResizeObserver(reposition);
+        resizeObserver.observe(el);
+        CameraPanel.popoutSync = { observer, resizeObserver, reposition };
+    }
+
+    static repositionActivePopout() {
+        CameraPanel.popoutSync?.reposition();
+    }
+
+    static onCloseCameraPopout(app) {
+        if (app.id !== `camera-view-${game.user.id}`) return;
+        CameraPanel.disconnectPopoutSync();
     }
 
     static onRenderCameraViews(app, html) {
@@ -108,13 +209,16 @@ export class CameraPanel {
         CameraPanel.applyDockState(app, cameraViews);
         CameraPanel.attachUserControls(cameraViews);
 
-        const hasUndockButton = !!document.querySelector('#camera-views [data-application-part="controls"] button[data-action="toggle-float"]');
-        if (!hasUndockButton) {
+        const userControlsNav = CameraPanel.getUserControlsNav();
+        const hasUndockButton = !!userControlsNav?.querySelector('button[data-action="toggle-panel-dock"]');
+        if (!hasUndockButton && userControlsNav) {
             const floatBTN = document.createElement("button");
             floatBTN.type = "button";
             floatBTN.classList.add("av-control", "inline-control", "icon", "fa-solid", "fa-fw", "fa-thumbtack");
-            floatBTN.dataset.action = "toggle-float";
-            floatBTN.dataset.tooltip = Utils.getSetting(MODULE_CONFIG.SETTING_KEYS.undocked) ? "Dock" : "Undock";
+            floatBTN.dataset.action = "toggle-panel-dock";
+            const initiallyUndocked = Utils.getSetting(MODULE_CONFIG.SETTING_KEYS.undocked);
+            floatBTN.dataset.tooltip = initiallyUndocked ? "Dock" : "Undock";
+            floatBTN.classList.toggle("is-undocked", initiallyUndocked);
 
             floatBTN.addEventListener("click", () => {
                 const cv = document.getElementById("camera-views");
@@ -125,10 +229,10 @@ export class CameraPanel {
                 }
                 Utils.setSetting(MODULE_CONFIG.SETTING_KEYS.undocked, undocked);
                 floatBTN.dataset.tooltip = undocked ? "Dock" : "Undock";
+                floatBTN.classList.toggle("is-undocked", undocked);
                 if (CameraPanel.cameraViewsApp) CameraPanel.applyDockState(CameraPanel.cameraViewsApp, cv);
             });
 
-            const userControlsNav = document.querySelector('#camera-views [data-application-part="controls"]');
             userControlsNav.appendChild(floatBTN);
 
             const playerNames = html.querySelectorAll(".player-name");
