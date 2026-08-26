@@ -3,10 +3,13 @@
     --controls-gap: 10px;
 }
 
-#camera-views {
-    /* --av-width: unset; */
+#camera-views:has(.camera-view) {
     width: 100% !important;
     min-width: 100% !important;
+}
+
+#camera-views {
+    /* --av-width: unset; */
     height: auto !important;
     background: none !important;
     position: unset !important;
